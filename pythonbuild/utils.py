@@ -391,7 +391,12 @@ def create_tar_from_directory(fh, base_path: pathlib.Path, path_prefix=None):
 
 def extract_tar_to_directory(source: pathlib.Path, dest: pathlib.Path):
     with tarfile.open(source, "r") as tf:
-        tf.extractall(dest)
+        # Python 3.14+ defaults to data filter which rejects absolute symlinks
+        # (PEP 706). Use tar filter to allow them in trusted build artifacts.
+        if hasattr(tarfile, "tar_filter"):
+            tf.extractall(dest, filter="tar")
+        else:
+            tf.extractall(dest)
 
 
 def extract_zip_to_directory(source: pathlib.Path, dest: pathlib.Path):
